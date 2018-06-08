@@ -16,7 +16,7 @@ class HBaseSink(options: Map[String, String]) extends Sink with Logging {
     //val df = data.sparkSession.createDataFrame(data.rdd, data.schema)
     val coll = data.collect()
     println(s"addBatch(id=$batchId, dataSize=${coll.length})")
-    coll.foreach(r => println(r))
+    //coll.foreach(r => println(r))
 
     if (coll.length > 0) {
       val df = data.sparkSession.createDataFrame(

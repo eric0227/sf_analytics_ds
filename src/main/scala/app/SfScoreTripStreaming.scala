@@ -120,9 +120,8 @@ object SfScoreTripStreaming {
       //.withColumn("event_list", event($"gps_list", $"deviceType")
       .drop("gps_list", "trip_stat")
       .writeStream.outputMode(OutputMode.Update())
-      .trigger(Trigger.ProcessingTime(15.seconds))
-      .format("console").option("header", "true").option("truncate", false).option("numRows", 100).start()
-
+      .trigger(Trigger.ProcessingTime(10.seconds))
+      .format("console").option("header", "true").option("truncate", false).start()
 
 /*
     // vehicle join
