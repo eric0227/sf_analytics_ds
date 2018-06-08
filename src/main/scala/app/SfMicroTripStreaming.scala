@@ -124,7 +124,7 @@ object SfMicroTripStreaming extends App {
 
 
 
-  // send kafka sf-score
+  // kafka Sink -- sf-score
   keyValueDF.where($"key" === "sf-trip").withColumn("key", lit("sf-score")).select("key", "value")
     .writeStream
     .format("kafka")
