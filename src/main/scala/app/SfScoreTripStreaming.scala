@@ -55,7 +55,7 @@ object SfScoreTripStreaming {
     println("#### sf-trip (Kafka) ######")
     trip.printSchema()
     // debug
-    trip.select("data.*", "latestTrip", "msgType").writeStream.format("console").option("header", "true").option("truncate", false).start()
+    //trip.select("data.*", "latestTrip", "msgType").writeStream.format("console").option("header", "true").option("truncate", false).start()
 
     //*****  sf_microtrip (HBase) ***************************************************/
     val microTrip = withCatalog(HBaseCatalog.sf_microtrip)
@@ -99,7 +99,7 @@ object SfScoreTripStreaming {
     println("#### join_by_trip_id ######")
     join_by_trip_id.printSchema()
     // debug
-    join_by_trip_id.writeStream.format("console").option("header", "true").option("truncate", false).option("numRows", 3).start()
+    //join_by_trip_id.writeStream.format("console").option("header", "true").option("truncate", false).option("numRows", 3).start()
 
     //********************** Trip 이동거리계산 ******************************************//
     val trip_dist = join_by_trip_id
@@ -116,9 +116,13 @@ object SfScoreTripStreaming {
       .withColumn("distance", trip_distance( $"gps_list"))
       //.withColumn("stat", trip_stat( $"trip_stat"))
       //.withColumn("event_list", event($"gps_list", $"deviceType")
+      .drop("gps_list", "trip_stat")
       .writeStream.outputMode(OutputMode.Update())
-      .format("console").option("header", "true").option("truncate", false).option("numRows", 3).start()
+      .trigger(Trigger.ProcessingTime(15.seconds))
+      .format("console").option("header", "true").option("truncate", false).option("numRows", 100).start()
 
+
+/*
     // vehicle join
     val join_by_vehicle_id = spark.sql(
       """
@@ -132,7 +136,7 @@ object SfScoreTripStreaming {
     join_by_vehicle_id
       .writeStream.outputMode(OutputMode.Update())
       .format("console").option("header", "true").option("truncate", false).start()
-
+*/
       .awaitTermination()
   }
 }
