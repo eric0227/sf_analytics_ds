@@ -1,0 +1,6 @@
+$ hbase shell
+
+> create ‘<table name>’,’<column family>’
+> create 'sf_microtrip', 'rowkey', 'cf1'
+> create 'sf_trip', 'rowkey', 'cf1'
+> create 'sf_event', 'rowkey', 'cf1'
