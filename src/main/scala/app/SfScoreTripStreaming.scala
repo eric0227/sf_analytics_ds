@@ -7,12 +7,13 @@ import org.apache.spark.sql.{DataFrame, Row, SparkSession}
 import org.apache.spark.sql.execution.datasources.hbase.{HBaseRelation, HBaseTableCatalog}
 import org.apache.spark.sql.streaming.{OutputMode, Trigger}
 import org.joda.time.LocalDate
-
 import scala.concurrent.duration._
+import app.udf.SfScoreUDF._
 
 object SfScoreTripStreaming {
 
   def main(args: Array[String]) = {
+
     val master = if (args.length == 1) Some(args(0)) else None
     val bulder = SparkSession.builder().appName("SfScoreTripStreaming")
     master.foreach(mst => bulder.master(mst))
@@ -79,7 +80,7 @@ object SfScoreTripStreaming {
         |       ,t.data.createdTime    as trip_created_time
         |       ,t.data.payload        as trip_payload_str
         |       ,t.data.updated        as updated
-        |       ,latestTrip            as latest_trip_str
+        |       ,latestTrip            as latest_trip
         |       ,msgType               as msg_type
         |       ,created_time          as mtrip_created_time
         |       ,date                  as mtrip_date
@@ -90,7 +91,8 @@ object SfScoreTripStreaming {
         |         on t.data.tripId = mt.trip_id
       """.stripMargin)
       .withColumn("trip_payload", from_json($"trip_payload_str", JsonDFSchema.trip_payload))
-      .withColumn("mtrip_payload", from_json($"mtrip_payload_str", JsonDFSchema.microtrip_payload))
+      .withColumn("mtrip_payload", explode(from_json($"mtrip_payload_str", JsonDFSchema.microtrip_payload)))
+      .drop("trip_payload_str", "mtrip_payload_str")
 
     join_by_trip_id.createOrReplaceTempView("join_by_trip_id")
 
@@ -99,15 +101,21 @@ object SfScoreTripStreaming {
     // debug
     join_by_trip_id.writeStream.format("console").option("header", "true").option("truncate", false).option("numRows", 3).start()
 
-    spark.sql(
-      s"""
-        | select    trip_id
-        |          ,min(vehicle_id)             as vehicle_id
-        |          ,collect_list(trip_payload)  as trip_payload_list
-        |          ,collect_list(mtrip_payload) as mtrip_payload_list
-        | from     join_by_trip_id
-        | group by trip_id
-      """.stripMargin)
+    //********************** Trip 이동거리계산 ******************************************//
+    val trip_dist = join_by_trip_id
+      //.where($"device_type" === "GPS")
+      .groupBy($"trip_id")
+      .agg(
+          collect_list(struct($"mtrip_payload.clt", $"mtrip_ts", $"mtrip_payload.lon", $"mtrip_payload.lat", $"trip_id")).as("gps_list")
+        , collect_list(struct($"mtrip_payload.sp", $"mtrip_payload.em", $"mtrip_payload.ldw", $"mtrip_payload.fcw")).as("trip_stat")
+        , first($"vehicle_id").as("vehicle_id")
+        , first($"user_id").as("user_id")
+        , first($"sensor_id").as("sensor_id")
+        , first($"device_type").as("sensor_id")
+      )
+      .withColumn("distance", trip_distance( $"gps_list"))
+      //.withColumn("stat", trip_stat( $"trip_stat"))
+      //.withColumn("event_list", event($"gps_list", $"deviceType")
       .writeStream.outputMode(OutputMode.Update())
       .format("console").option("header", "true").option("truncate", false).option("numRows", 3).start()
 

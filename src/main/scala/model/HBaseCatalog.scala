@@ -15,7 +15,7 @@ object HBaseCatalog {
        |    "date"         :{"cf":"cf1", "col":"date", "type":"string"},
        |    "device_type"  :{"cf":"cf1", "col":"device_type", "type":"string"},
        |    "payload"      :{"cf":"cf1", "col":"payload", "type":"string"},
-       |    "ts"           :{"cf":"cf1", "col":"ts", "type":"string"}
+       |    "ts"           :{"cf":"cf1", "col":"ts", "type":"long"}
        |  }
        |}""".stripMargin
 

@@ -12,7 +12,7 @@ object JsonDFSchema {
       .add("sensorId", StringType)
       .add("vehicleId", StringType)
       .add("date", StringType)
-      .add("ts", StringType)
+      .add("ts", LongType)
       .add("payload", StringType)
       .add("deviceType", StringType)
       .add("createdTime", StringType)
