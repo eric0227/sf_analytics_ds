@@ -2,6 +2,7 @@ package model
 
 import com.datastax.spark.connector._
 import common.TreanaConfig
+import common.TreanaConfig._
 
 case class SchemaDef( name:String, schema:Seq[String], columns:Seq[ColumnRef] = Seq.empty[ColumnRef])
 
@@ -13,7 +14,7 @@ object TreSchema {
     */
   object dse {
 
-    val keyspace = if(TreanaConfig.config.getIsNull("treana.dse.keyspace")) "thingsboard" else TreanaConfig.config.getString("treana.dse.keyspace")
+    val keyspace = TreanaConfig.config.getOrElse[String]("treana.dse.keyspace", "thingsboard")
 
     val sensor = SchemaDef("tre_sensor", Seq())
     val vehicle = SchemaDef("tre_vehicle", Seq())
@@ -208,8 +209,7 @@ object TreSchema {
 
   object sparkCassandra {
 
-    //val keyspace = TreanaConfig.config.getOrElse[String]("treana.spark.cassandra.keyspace", "spark")
-    val keyspace = if(TreanaConfig.config.getIsNull("treana.spark.cassandra.keyspace")) "spark" else TreanaConfig.config.getString("treana.spark.cassandra.keyspace")
+    val keyspace = TreanaConfig.config.getOrElse[String]("treana.spark.cassandra.keyspace", "spark")
 
     val trip = SchemaDef( "tre_trip", Seq(
       s"""CREATE TABLE IF NOT exists $keyspace.tre_trip (
