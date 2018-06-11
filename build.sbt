@@ -1,3 +1,4 @@
+
 name := "sf_analytics_ds"
 
 version := "0.1"
@@ -5,6 +6,10 @@ version := "0.1"
 scalaVersion := "2.11.8"
 
 val sparkVersion = "2.3.0"
+
+dependencyOverrides += "com.fasterxml.jackson.core" % "jackson-core" % "2.8.9"
+dependencyOverrides += "com.fasterxml.jackson.core" % "jackson-databind" % "2.8.9"
+dependencyOverrides += "com.fasterxml.jackson.module" % "jackson-module-scala_2.11" % "2.8.9"
 
 resolvers += "hortonworks Repository" at "http://repo.hortonworks.com/content/groups/public/"
 
@@ -16,11 +21,19 @@ libraryDependencies += "org.apache.spark" %% "spark-sql" % sparkVersion  //% "pr
 
 libraryDependencies += "org.apache.spark" %% "spark-streaming" % sparkVersion  //% "provided"
 
+libraryDependencies += "com.datastax.spark" %% "spark-cassandra-connector" % "2.0.6" //% "provided"
+
 libraryDependencies += "org.apache.spark" %% "spark-streaming-kafka-0-10" % sparkVersion
 
 libraryDependencies += "org.apache.spark" %% "spark-sql-kafka-0-10" % sparkVersion
 
 libraryDependencies += "com.hortonworks" % "shc-core" % "1.1.1-2.1-s_2.11"
+
+libraryDependencies += "com.typesafe.play" %% "play-json" % "2.6.9" excludeAll ExclusionRule(organization = "com.fasterxml.jackson")
+
+libraryDependencies += "com.typesafe" % "config" % "1.3.3"
+
+libraryDependencies += "com.typesafe.scala-logging" %% "scala-logging" % "3.9.0"
 
 libraryDependencies += "org.scalatest" %% "scalatest" % "3.0.5" % "test"
 
@@ -52,6 +65,7 @@ assemblyMergeStrategy in assembly := {
   case PathList("javax", "el", xs@_*) => MergeStrategy.last
   case PathList("javax", "ws", xs@_*) => MergeStrategy.last
   case PathList("org", "slf4j", xs@_*) => MergeStrategy.last
+  case PathList("com", "fasterxml", xs@_*) => MergeStrategy.last
   case "about.html" => MergeStrategy.rename
   case "overview.html" => MergeStrategy.rename
   case "META-INF/ECLIPSEF.RSA" => MergeStrategy.last
