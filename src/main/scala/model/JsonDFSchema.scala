@@ -79,36 +79,15 @@ object JsonDFSchema {
       .add("sensorId", StringType))
     .add("msgType", StringType)
 
-  val gps_microtrip = new StructType()
-    .add("ts", LongType)
-    .add("ty", IntegerType)
-    .add("pld", new StructType()
-        .add("tid", StringType)
-        .add("lon", StringType)
-        .add("lat", StringType)
-        .add("alt", StringType)
-        .add("clt", StringType)
-        .add("sp", StringType)
-        .add("dop", StringType)
-        .add("nos", StringType)
-        .add("tdis", StringType)
-    )
+  val event_payload = new StructType()
+    .add("dtcc", StringType)
+    .add("wbv", IntegerType)
+    .add("wid", IntegerType)
+    .add("ldw", IntegerType)
+    .add("fcw", IntegerType)
 
-  val gpsTrip = new StructType()
-    .add("ts", LongType)
-    .add("ty", IntegerType)
-    .add("pld", new StructType()
-      .add("tid", StringType)       // Trip 고유 번호
-      .add("stt", StringType)       // M Trip의 시작 날짜 및 시간
-      .add("edt", StringType)       // M Trip의 종료 날짜 및 시간
-      .add("dis", StringType)       // Trip의 주행거리
-      .add("stlat", StringType)     // 운행 시작 좌표의 위도
-      .add("stlon", StringType)     // 운행 시작 좌표의 경도
-      .add("edlat", StringType)     // 운행 종료 좌표의 위도
-      .add("edlon", StringType)     // 운행 종료 좌표의 경도
-      .add("hsts", StringType)      // Trip의 최고 속도
-      .add("mesp", StringType)      // Trip의 평균 속도
-      .add("fwv", StringType)       // 펌웨어 버전
-      .add("dtvt", StringType)      // 주행시간
-    )
+    .add("dclon", DoubleType)
+    .add("dclat", DoubleType)
+    .add("plat", DoubleType)
+    .add("plon", DoubleType)
 }

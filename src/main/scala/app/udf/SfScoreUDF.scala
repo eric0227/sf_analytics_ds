@@ -1,5 +1,8 @@
 package app.udf
 
+import java.util.UUID
+
+import com.datastax.driver.core.utils.UUIDs
 import com.typesafe.scalalogging.LazyLogging
 import common.TreanaConfig
 import common.TreanaConfig._
@@ -8,21 +11,16 @@ import org.apache.http.client.HttpResponseException
 import org.apache.spark.sql.Row
 import org.apache.spark.sql.functions.udf
 import org.apache.spark.sql.types.{DoubleType, IntegerType, LongType}
-import org.joda.time.LocalDateTime
-import play.api.libs.json.{JsSuccess, Json}
+import org.joda.time.{LocalDate, LocalDateTime}
+import play.api.libs.json.{JsArray, JsObject, JsSuccess, Json}
 
 object SfScoreUDF extends LazyLogging {
 
   val speedCheckInterval = TreanaConfig.config.getOrElse[Int]("treana.speed.interval", 5) // 5 seconds
-
   val ksLinkUrl = TreanaConfig.config.getOrElse[String]("treana.speed.kslink.url", "")
-
   val ksLinkEnabled = TreanaConfig.config.getOrElse[Boolean]("treana.speed.kslink.enabled", false)
-
   val ksLinkTimeout = TreanaConfig.config.getOrElse[Int]("treana.speed.kslink.timeout", 120)
-
   val batchSize = TreanaConfig.config.getOrElse[Int]("treana.dse.batchSize", 10)
-
   val maxSparkIdx = TreanaConfig.config.getOrElse[Int]("treana.dse.maxSparkIdx", 60)
 
   val gpsEventType = Map[String,Int](
@@ -85,18 +83,45 @@ object SfScoreUDF extends LazyLogging {
     }
   }
 
-  val trip_stat = udf((eventList: Seq[Row]) => {
-
+  val mtrip_and_event_stat = udf((trip_id: String, vehicle_id: String, user_id: String, company_id: String, device_type:String, device_dist: Int, eventList: Seq[Row], eventPayloadList: Seq[String]) => {
     def checkNull(a:Any) : Int = if (a == null) 0 else a.asInstanceOf[Int]
 
-    val events = eventList.map {
+    val stat = eventList.map {
       case Row(sp, em, ldw, fcw) => TripStat(checkNull(sp), checkNull(em), checkNull(ldw), checkNull(fcw))
       case _ => TripStat(0,0,0,0)
     }
 
-    events.reduce( _.add(_)).stat
+    val dt = new LocalDate(UUIDs.unixTimestamp(UUID.fromString(trip_id)))
+
+    //stat.reduce( _.add(_)).stat
+
+    val ts = stat.reduce( _.add(_))   // 통계 합산
+    ts.add(TreEventEnum.distance.id, device_dist) // distance 값 추가
+    val tripStatRow: TreTripStatRow = ts.toTreTripStatRow(trip_id, vehicle_id, user_id, company_id, dt.toString, device_type)
+
+    val x = eventPayloadList.map(payload => parseEventPayload(trip_id, payload)).flatten
+
+    // 이벤트 통계 합산
+    if ( x.nonEmpty)
+      x.reduce(_.add(_))
+        .toTreTripStatRow(tripStatRow.tripId, tripStatRow.vehicleId, tripStatRow.userId, tripStatRow.companyId, tripStatRow.date, tripStatRow.deviceType)
+        .add(tripStatRow)
+    else tripStatRow
   })
 
+/*
+  val addEventStat = udf((trip_stat_row: TreTripStatRow, event_payload: Seq[String]) => {
+    val trip_id = trip_stat_row.tripId
+    val x = event_payload.map(payload => parseEventPayload(trip_id, payload)).flatten
+
+    // 이벤트 통계 합산
+    if ( x.nonEmpty)
+      x.reduce(_.add(_))
+        .toTreTripStatRow(trip_stat_row.tripId, trip_stat_row.vehicleId, trip_stat_row.userId, trip_stat_row.companyId, trip_stat_row.date, trip_stat_row.deviceType)
+        .add(trip_stat_row)
+    else trip_stat_row
+  })
+*/
 
   val trip_distance = udf((gpsList:Seq[Row]) => {
     // devTime이 있으면 그 값을 사용한다. ts는 DB write 시각이 될 수 있으며, 이때는 시간 간격이 달라지게 된다.
@@ -116,6 +141,10 @@ object SfScoreUDF extends LazyLogging {
     // 과속 여부 확인
     val overLimits = checkOverLimit(gps, deviceType)
     (events, overLimits)
+  })
+
+  val lon_lat_string = udf((lon: Long, lat: Long) => {
+    if(lon != null && lat != null)  s"{lon:${lon},lat:${lat}}" else null
   })
 
 
@@ -188,5 +217,45 @@ object SfScoreUDF extends LazyLogging {
       logger.info( s"$dt ${ksLinkEnabled} size=${gps.size}")
       Seq.empty[TripEventResult]
     }
+  }
+
+  // 201805 : Aggregated Data 처리
+  def parseEventPayload( tripId:String, payload:String ): Seq[TripStat] = {
+    val json = Json.parse(payload)
+
+    json match {
+      case a : JsArray =>
+        a.value.filter{
+          case a: JsObject => true
+          case _ => false
+        }.map(_.asInstanceOf[JsObject]).map(o => objToPayloadTuple(tripId, o))
+      case o: JsObject =>
+        Seq(objToPayloadTuple(tripId, o))
+      case _ =>
+        logger.warn("Failed to parse payload")
+        Seq.empty[TripStat]
+    }
+  }
+
+  // 201805 : Aggregated Data 처리
+  def objToPayloadTuple( tripId:String, o:JsObject ): TripStat = {
+    val dtcc = (o \ "dtcc").asOpt[String]
+    val wbv = (o \ "wbv").asOpt[Int]
+    val wid = (o \ "wid").asOpt[Int]
+    val ldw = (o \ "ldw").asOpt[Int]
+    val fcw = (o \ "fcw").asOpt[Int]
+
+
+    val dclon = (o \ "dclon").asOpt[Double]
+    val dclat = (o \ "dclat").asOpt[Double]
+    val plat = (o \ "plat").asOpt[Double]
+    val plon = (o \ "plon").asOpt[Double]
+    val cwdrv = if ( dclon.isDefined && dclat.isDefined) Some( s"{lon:${dclon.get},lat:${dclat.get}}") else None
+    val cwprk = if ( plon.isDefined && plat.isDefined) Some( s"{lon:${plon.get},lat:${plat.get}}") else None
+
+    val event = Seq( dtcc, cwdrv, cwprk, wbv.map(_.toString), wid.map(_.toString)).map(_.getOrElse(""))
+
+    // LDW, FCW 이벤트와 dtcc 등의 이벤트를 TripStat 객체 형식으로 반환
+    TripStat(0, 0, ldw.getOrElse(0), fcw.getOrElse(0), event)
   }
 }

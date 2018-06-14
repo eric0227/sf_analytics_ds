@@ -1,6 +1,7 @@
 package kafka
 
 import common.TreanaConfig
+import common.TreanaConfig._
 import model.{TreEventRow, TreMicroTripRow, TreTripRow}
 import org.apache.kafka.common.serialization.{StringDeserializer, StringSerializer}
 
@@ -25,29 +26,22 @@ object TreKafka {
     )
   }
 
-  //val hosts = TreanaConfig.config.getOrElse[String]("treana.kafka.servers", "localhost:9092")
-  val hosts = if(TreanaConfig.config.getIsNull("treana.kafka.servers")) "localhost:9092" else TreanaConfig.config.getString("treana.kafka.servers")
+  val hosts = TreanaConfig.config.getOrElse[String]("treana.kafka.servers", "localhost:9092")
 
-  //val interval = TreanaConfig.config.getOrElse[Int]("treana.kafka.interval", 5)
-  val interval = if(TreanaConfig.config.getIsNull("treana.kafka.interval")) 5 else TreanaConfig.config.getInt("treana.kafka.interval")
+  val interval = TreanaConfig.config.getOrElse[Int]("treana.kafka.interval", 5)
 
-  // val maxRate = TreanaConfig.config.getOrElse[String]("treana.kafka.maxRate", "50")
-  val maxRate = if(TreanaConfig.config.getIsNull("treana.kafka.maxRate")) "50" else TreanaConfig.config.getString("treana.kafka.maxRate")
+  val maxRate = TreanaConfig.config.getOrElse[String]("treana.kafka.maxRate", "50")
 
   val sparkCassandraHost = TreanaConfig.config.getString("treana.spark.cassandra.host")
 
   // topics
-  //val topicTrip = TreanaConfig.config.getOrElse[String]("treana.kafka.topics.trip", "sf-trip")
-  val topicTrip = if(TreanaConfig.config.getIsNull("treana.kafka.topics.trip")) "sf-trip" else TreanaConfig.config.getString("treana.kafka.topics.trip")
+  val topicTrip = TreanaConfig.config.getOrElse[String]("treana.kafka.topics.trip", "sf-trip")
 
-  //val topicScore = TreanaConfig.config.getOrElse[String]("treana.kafka.topics.retry", "sf-score")
-  val topicScore = if(TreanaConfig.config.getIsNull("treana.kafka.topics.retry")) "sf-score" else TreanaConfig.config.getString("treana.kafka.topics.retry")
+  val topicScore = TreanaConfig.config.getOrElse[String]("treana.kafka.topics.retry", "sf-score")
 
-  //val topicMicrotrip = TreanaConfig.config.getOrElse[String]("treana.kafka.topics.microtrip", "sf-microtrip")
-  val topicMicrotrip = if(TreanaConfig.config.getIsNull("treana.kafka.topics.microtrip")) "sf-microtrip" else TreanaConfig.config.getString("treana.kafka.topics.microtrip")
+  val topicMicrotrip = TreanaConfig.config.getOrElse[String]("treana.kafka.topics.microtrip", "sf-microtrip")
 
-  //val topicEvent = TreanaConfig.config.getOrElse[String]("treana.kafka.topics.event", "sf-event")
-  val topicEvent = if(TreanaConfig.config.getIsNull("treana.kafka.topics.event")) "sf-event" else TreanaConfig.config.getString("treana.kafka.topics.event")
+  val topicEvent = TreanaConfig.config.getOrElse[String]("treana.kafka.topics.event", "sf-event")
 }
 
 case class DeviceTripId( deviceType:String, id:Option[String])

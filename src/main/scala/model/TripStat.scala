@@ -2,6 +2,7 @@ package model
 
 import model.TreEventEnum._
 import model.TreEventString._
+import play.api.libs.json.Json
 
 case class TripStat(stat: Array[Int], event: Array[String]) {
 
@@ -81,6 +82,7 @@ object TripStat {
   }
 
 }
+
 
 object MainTripStat {
 
