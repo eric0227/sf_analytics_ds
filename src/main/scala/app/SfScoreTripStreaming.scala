@@ -131,7 +131,7 @@ object SfScoreTripStreaming {
       )
       .withColumn("device_dist", SfScoreUDF.trip_distance( $"gps_list"))
       .withColumn("stat", SfScoreUDF.mtrip_and_event_stat($"trip_id", $"vehicle_id", $"user_id", $"company_id", $"device_type", $"device_dist", $"trip_stat", $"event_payload"))
-      .withColumn("event_list", SfScoreUDF.event($"gps_list", $"device_type"))
+      .withColumn("event_list", SfScoreUDF.event($"vehicle_id", $"user_id", $"gps_list", $"device_type"))
       .drop("gps_list", "trip_stat", "event_payload")
 
     println("#### trip_dist_stat ######")

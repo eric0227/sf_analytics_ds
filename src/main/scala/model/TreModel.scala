@@ -1,5 +1,6 @@
 package model
 
+import app.udf.SfScoreUDF.TripEventResult
 import com.datastax.driver.core.utils.UUIDs
 import kafka.TreKafka
 import org.joda.time.LocalDateTime
@@ -244,5 +245,6 @@ object TreMoveDF {
 }
 
 
+case class TripEventResultTuple(check_event: Seq[TreGpsEventRow], check_over_limit: Seq[TreGpsEventRow])
 
 

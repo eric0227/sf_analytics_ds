@@ -133,14 +133,14 @@ object SfScoreUDF extends LazyLogging {
   })
 
 
-  val event = udf((gpsList: Seq[Row], deviceType:String) => {
+  val event = udf((vehicle_id: String, user_id: String, gpsList: Seq[Row], deviceType:String) => {
     // GPS 정보 변환
     val gps = toGpsList(gpsList)
-    val events = checkEvent( gps, deviceType)
+    val events = checkEvent( gps, deviceType).map(_.toTreGpsEventRow(vehicle_id, user_id))
 
     // 과속 여부 확인
-    val overLimits = checkOverLimit(gps, deviceType)
-    (events, overLimits)
+    val overLimits = checkOverLimit(gps, deviceType).map(_.toTreGpsEventRow(vehicle_id, user_id))
+    TripEventResultTuple(events, overLimits)
   })
 
   val lon_lat_string = udf((lon: Long, lat: Long) => {
