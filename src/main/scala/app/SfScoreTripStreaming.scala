@@ -109,7 +109,7 @@ object SfScoreTripStreaming {
     println("#### trip_microtrip_event ######")
     trip_microtrip_event.printSchema()
     // debug
-    //trip_microtrip_event.writeStream.format("console").option("header", "true").option("truncate", false).option("numRows", 3).start()
+    trip_microtrip_event.writeStream.format("console").option("header", "true").option("truncate", false).option("numRows", 3).start()
 
     //********************** Trip 이동거리계산 ******************************************//
     val trip_dist_stat = trip_microtrip_event
@@ -120,7 +120,7 @@ object SfScoreTripStreaming {
           count($"mtrip_payload").as("mtrip_cnt")
         , collect_list(struct($"mtrip_payload.clt", $"mtrip_ts", $"mtrip_payload.lon", $"mtrip_payload.lat", $"trip_id")).as("gps_list")
         , collect_list(struct($"mtrip_payload.sp", $"mtrip_payload.em", $"mtrip_payload.ldw", $"mtrip_payload.fcw")).as("trip_stat")
-        , collect_list($"event_payload_str").as("event_payload")
+        , collect_set($"event_payload_str").as("event_payload")
 
         , first($"vehicle_id").as("vehicle_id")
         , first($"user_id").as("user_id")
