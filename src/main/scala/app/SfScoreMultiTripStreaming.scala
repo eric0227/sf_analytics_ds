@@ -51,7 +51,8 @@ object SfScoreMultiTripStreaming {
     val trip = keyValueDF.where($"key" === "sf-score")
       .select($"timestamp", from_json($"value", JsonDFSchema.sf_trip).as("value"))
       .select("timestamp", "value.*")
-      .withColumn("base_device_type", SfScoreUDF.base_device_type($"latestTrip"))
+      .withColumn("base_device_type", SfScoreUDF.base_device_type($"latestTrip")) //  대표 DeviceTrip 추출
+      .where($"base_device_type" === $"data.deviceType") // 해당 DeviceTrip 만 필터링
 
     trip.createOrReplaceTempView("sf_trip")
     println("#### sf-trip (Kafka) ######")
@@ -97,9 +98,9 @@ object SfScoreMultiTripStreaming {
         |       ,e.payload             as event_payload_str
         | from            sf_trip t
         | inner join      sf_microtrip mt
-        | on              t.data.tripId = mt.trip_id and t.base_device_type = mt.device_type and t.data.startTs <= mt.ts and t.data.endTs >= mt.ts
+        | on              t.data.vehicleId = mt.vehicle_id and t.data.startTs <= mt.ts and t.data.endTs >= mt.ts
         | left outer join sf_event e
-        | on              t.data.tripId = e.trip_id  and t.data.startTs <= e.event_ts and t.data.endTs >= e.event_ts and t.base_device_type = mt.device_type
+        | on              t.data.vehicleId = e.vehicle_id and t.data.startTs <= e.event_ts and t.data.endTs >= e.event_ts
       """.stripMargin)
       .withColumn("trip_payload", from_json($"trip_payload_str", JsonDFSchema.trip_payload))
       .withColumn("mtrip_payload", explode(from_json($"mtrip_payload_str", JsonDFSchema.microtrip_payload)))
@@ -114,14 +115,14 @@ object SfScoreMultiTripStreaming {
     val trip_dist_stat = trip_microtrip_event
       //.where($"device_type" === "GPS")
       //.withWatermark(eventTime = "timestamp", delayThreshold = "10 seconds")
-      .groupBy($"vehicle_id")
+      .groupBy($"vehicle_id")    // 차량으로 Aggregation
       .agg(
           count($"mtrip_payload").as("mtrip_cnt")
         , collect_list(struct($"mtrip_payload.clt", $"mtrip_ts", $"mtrip_payload.lon", $"mtrip_payload.lat", $"trip_id")).as("gps_list")
         , collect_list(struct($"mtrip_payload.sp", $"mtrip_payload.em", $"mtrip_payload.ldw", $"mtrip_payload.fcw")).as("trip_stat")
         , collect_set($"event_payload_str").as("event_payload")
 
-        , first($"vehicle_id").as("vehicle_id")
+        , first($"trip_id").as("trip_id")
         , first($"user_id").as("user_id")
         , first($"company_id").as("company_id")
         , first($"sensor_id").as("sensor_id")
