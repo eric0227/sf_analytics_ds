@@ -21,7 +21,7 @@ libraryDependencies += "org.apache.spark" %% "spark-sql" % sparkVersion  //% "pr
 
 libraryDependencies += "org.apache.spark" %% "spark-streaming" % sparkVersion  //% "provided"
 
-libraryDependencies += "com.datastax.spark" %% "spark-cassandra-connector" % "2.0.6" //% "provided"
+libraryDependencies += "com.datastax.spark" %% "spark-cassandra-connector" % "2.3.0" //% "provided"
 
 libraryDependencies += "org.apache.spark" %% "spark-streaming-kafka-0-10" % sparkVersion
 
@@ -72,7 +72,7 @@ assemblyMergeStrategy in assembly := {
   case "META-INF/mailcap" => MergeStrategy.last
   case "META-INF/mimetypes.default" => MergeStrategy.last
   case "plugin.properties" => MergeStrategy.last
-  //case "log4j.properties" => MergeStrategy.last
+  case "log4j.properties" => MergeStrategy.last
   case "application.conf" => MergeStrategy.last
   case "logback.xml"      => MergeStrategy.last
   case x =>

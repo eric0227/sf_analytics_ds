@@ -11,6 +11,10 @@ import org.joda.time.LocalDate
 
 import scala.concurrent.duration._
 import app.udf.SfScoreUDF._
+import com.datastax.spark.connector.cql.CassandraConnector
+import common.TreanaConfig
+import kafka.TreKafka
+import org.apache.spark.SparkConf
 import org.apache.spark.sql.execution.streaming.FileStreamSource.Timestamp
 
 object SfScoreTripStreaming {
@@ -18,10 +22,24 @@ object SfScoreTripStreaming {
   def main(args: Array[String]) = {
 
     val master = if (args.length == 1) Some(args(0)) else None
-    val bulder = SparkSession.builder().appName("SfScoreTripStreaming")
-    master.foreach(mst => bulder.master(mst))
-    val spark = bulder.getOrCreate()
-    spark.conf.set("spark.sql.streaming.checkpointLocation", "_checkpoint/SfScoreTripStreaming")
+    val bulder = SparkSession.builder()
+
+    val conf = new SparkConf()
+    master.foreach(mst => conf.setMaster(mst))
+    conf.setAppName("SfScoreTripStreaming")
+    conf.set("spark.sql.streaming.checkpointLocation", "_checkpoint/SfScoreTripStreaming")
+    conf.set("spark.cassandra.connection.host", TreanaConfig.config.getString("treana.dse.host"))
+    conf.set("spark.cassandra.connection.connections_per_executor_max", "4")
+    conf.set("spark.cassandra.connection.keep_alive_ms", "600000")  // 10 minutes
+    conf.set("spark.streaming.backpressure.initialRate", "10")
+    conf.set("spark.streaming.backpressure.enabled", "true")
+    conf.set("spark.streaming.receiver.maxRate", "100")
+    conf.set("spark.streaming.kafka.maxRatePerPartition", TreKafka.maxRate)
+    conf.set("spark.streaming.stopGracefullyOnShutdown","true")
+
+    val spark = bulder.config(conf).getOrCreate()
+
+
     val sqlContext = spark.sqlContext
 
     def withCatalog(cat: String): DataFrame = {
@@ -61,13 +79,13 @@ object SfScoreTripStreaming {
     //trip.select("data.*", "latestTrip", "msgType").writeStream.format("console").option("header", "true").option("truncate", false).start()
 
     //*****  sf_microtrip (HBase) ***************************************************/
-    val microTrip = withCatalog(HBaseCatalog.sf_microtrip).cache()
+    val microTrip = withCatalog(HBaseCatalog.sf_microtrip)
     microTrip.createOrReplaceTempView("sf_microtrip")
     println("#### sf_microtrip (HBase) ######")
     microTrip.printSchema()
 
     //*****  sf_event (HBase) ***************************************************/
-    val event = withCatalog(HBaseCatalog.sf_event).cache()
+    val event = withCatalog(HBaseCatalog.sf_event)
     event.createOrReplaceTempView("sf_event")
     println("#### sf_event (HBase) ######")
     event.printSchema()
@@ -141,8 +159,6 @@ object SfScoreTripStreaming {
       .writeStream.outputMode(OutputMode.Update())
       .trigger(Trigger.ProcessingTime(3.seconds))
       .format("console").option("header", "true").option("truncate", false).start()
-
-
 
 /*
     // vehicle join

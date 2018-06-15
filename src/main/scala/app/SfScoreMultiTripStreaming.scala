@@ -61,13 +61,13 @@ object SfScoreMultiTripStreaming {
     trip.select("data.*", "latestTrip", "msgType", "base_device_type").writeStream.format("console").option("header", "true").option("truncate", false).option("numRows", 3).start()
 
     //*****  sf_microtrip (HBase) ***************************************************/
-    val microTrip = withCatalog(HBaseCatalog.sf_microtrip).cache()
+    val microTrip = withCatalog(HBaseCatalog.sf_microtrip)
     microTrip.createOrReplaceTempView("sf_microtrip")
     println("#### sf_microtrip (HBase) ######")
     microTrip.printSchema()
 
     //*****  sf_event (HBase) ***************************************************/
-    val event = withCatalog(HBaseCatalog.sf_event).cache()
+    val event = withCatalog(HBaseCatalog.sf_event)
     event.createOrReplaceTempView("sf_event")
     println("#### sf_event (HBase) ######")
     event.printSchema()
