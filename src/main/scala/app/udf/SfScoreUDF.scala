@@ -6,6 +6,7 @@ import com.datastax.driver.core.utils.UUIDs
 import com.typesafe.scalalogging.LazyLogging
 import common.TreanaConfig
 import common.TreanaConfig._
+import kafka.DeviceTripId
 import model._
 import org.apache.http.client.HttpResponseException
 import org.apache.spark.sql.Row
@@ -147,7 +148,15 @@ object SfScoreUDF extends LazyLogging {
     if(lon != null && lat != null)  s"{lon:${lon},lat:${lat}}" else null
   })
 
+  val base_device_type = udf((latestTrip: Seq[Row]) => {
+    val list = latestTrip.map {
+      case Row(deviceType: String, id: String) => DeviceTripId(deviceType, Some(id))
+      case Row(deviceType: String) => DeviceTripId(deviceType, None)
+    }
 
+    val deviceType = priorityDeviceTrip(list)
+    deviceType
+  })
 
   def checkOverLimit( gps:Seq[TreLocation], deviceType:String) : Seq[TripEventResult] = {
 
@@ -258,4 +267,28 @@ object SfScoreUDF extends LazyLogging {
     // LDW, FCW 이벤트와 dtcc 등의 이벤트를 TripStat 객체 형식으로 반환
     TripStat(0, 0, ldw.getOrElse(0), fcw.getOrElse(0), event)
   }
+
+  /**
+    * 201805 : 복합 센서, OBD -> ADAS -> GPS -> BBX 순으로 기준 trip을 삼는다.
+    */
+  def priorityDeviceTrip(deviceTrip: Seq[DeviceTripId]): Option[String] = {
+    // deviceTrip.foreach{ r => println(s"${r.deviceType} ${r.id} ${r.id.nonEmpty}") }
+    if (deviceTrip.exists(r => r.deviceType == "OBD")) {
+      // logger.info("priorityDeviceTrip - OBD")
+      Some("OBD")
+    } else if (deviceTrip.exists(r => r.deviceType == "ADAS")) {
+      // logger.info("priorityDeviceTrip - ADAS")
+      Some("ADAS")
+    } else if (deviceTrip.exists(r => r.deviceType == "GPS")) {
+      // logger.info("priorityDeviceTrip - GPS")
+      Some("GPS")
+    } else if (deviceTrip.exists(r => r.deviceType == "BLACKBOX")) {
+      // logger.info("priorityDeviceTrip - BLACKBOX")
+      Some("BLACKBOX")
+    } else {
+      logger.warn("priorityDeviceTrip - Not found deviceType matched!!")
+      None
+    }
+  }
+
 }
