@@ -9,7 +9,7 @@ import common.TreanaConfig._
 import kafka.DeviceTripId
 import model._
 import org.apache.http.client.HttpResponseException
-import org.apache.spark.sql.Row
+import org.apache.spark.sql.{DataFrame, Row}
 import org.apache.spark.sql.functions.udf
 import org.apache.spark.sql.types.{DoubleType, IntegerType, LongType}
 import org.joda.time.{LocalDate, LocalDateTime}
@@ -23,7 +23,7 @@ object SfScoreUDF extends LazyLogging {
   val ksLinkTimeout = TreanaConfig.config.getOrElse[Int]("treana.speed.kslink.timeout", 120)
   val batchSize = TreanaConfig.config.getOrElse[Int]("treana.dse.batchSize", 10)
   val maxSparkIdx = TreanaConfig.config.getOrElse[Int]("treana.dse.maxSparkIdx", 60)
-
+  
   val gpsEventType = Map[String,Int](
     "start" -> 1,
     "accel" -> 2,

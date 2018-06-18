@@ -1,3 +1,4 @@
+import sbt.ExclusionRule
 
 name := "sf_analytics_ds"
 
@@ -18,12 +19,15 @@ libraryDependencies += "org.apache.spark" %% "spark-core" % sparkVersion  //% "p
 libraryDependencies += "org.apache.spark" %% "spark-sql" % sparkVersion  //% "provided"
 libraryDependencies += "org.apache.spark" %% "spark-streaming" % sparkVersion  //% "provided"
 libraryDependencies += "com.datastax.spark" %% "spark-cassandra-connector" % "2.3.0" //% "provided"
+libraryDependencies += "org.apache.phoenix" % "phoenix-spark" % "4.14.0-HBase-1.2" excludeAll ExclusionRule(organization = "org.apache.spark") //% "provided"
+
 libraryDependencies += "org.apache.spark" %% "spark-streaming-kafka-0-10" % sparkVersion
 libraryDependencies += "org.apache.spark" %% "spark-sql-kafka-0-10" % sparkVersion
 libraryDependencies += "com.hortonworks" % "shc-core" % "1.1.1-2.1-s_2.11"
 libraryDependencies += "com.typesafe.play" %% "play-json" % "2.6.9" excludeAll ExclusionRule(organization = "com.fasterxml.jackson")
 libraryDependencies += "com.typesafe" % "config" % "1.3.3"
 libraryDependencies += "com.typesafe.scala-logging" %% "scala-logging" % "3.9.0"
+
 libraryDependencies += "org.scalatest" %% "scalatest" % "3.0.5" % "test"
 
 /*
