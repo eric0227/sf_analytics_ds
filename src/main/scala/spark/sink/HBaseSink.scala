@@ -13,10 +13,16 @@ class HBaseSink(options: Map[String, String]) extends Sink with Logging {
   private val hBaseCatalog = options.get("hbasecat").map(_.toString).getOrElse("")
 
   override def addBatch(batchId: Long, data: DataFrame): Unit = synchronized {
-    //val df = data.sparkSession.createDataFrame(data.rdd, data.schema)
+/*
+    val df = data.sparkSession.createDataFrame(data.rdd, data.schema)
+    df.write
+      .options(Map(HBaseTableCatalog.tableCatalog -> hBaseCatalog,
+        HBaseTableCatalog.newTable -> "5"))
+      .format("org.apache.spark.sql.execution.datasources.hbase").save()
+*/
+
     val coll = data.collect()
     println(s"addBatch(id=$batchId, dataSize=${coll.length})")
-    //coll.foreach(r => println(r))
 
     if (coll.length > 0) {
       val df = data.sparkSession.createDataFrame(

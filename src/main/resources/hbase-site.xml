@@ -11,4 +11,8 @@
         <name>hbase.zookeeper.property.clientPort</name>
         <value>2181</value>
     </property>
+    <property>
+        <name>hbase.regionserver.wal.codec</name>
+        <value>org.apache.hadoop.hbase.regionserver.wal.IndexedWALEditCodec</value>
+    </property>
 </configuration>

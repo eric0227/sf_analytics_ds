@@ -25,6 +25,7 @@ object SfMicroTripStreaming extends App {
     .option("kafka.bootstrap.servers", bootstrap)
     .option("subscribe", "sf-microtrip")
     .option("startingOffsets", "latest") // // earliest, latest
+    //.option("checkpointLocation", "_checkpoint/sf-microtrip")
     .load()
     .selectExpr("CAST(key AS STRING)", "CAST(value AS STRING)")
     .as[(String, String)].toDF("key", "value")
@@ -63,6 +64,7 @@ object SfMicroTripStreaming extends App {
   val microtripWriteStream = spark.sql(
     s"""
       | select data.microTripId            as key1
+      |       ,data.microTripId            as micro_trip_id
       |       ,data.vehicleId              as vehicle_id
       |       ,data.tripId                 as trip_id
       |       ,data.sensorId               as sensor_id
@@ -73,7 +75,9 @@ object SfMicroTripStreaming extends App {
       |       ,data.ts                     as ts
       |  from sf_microtrip
     """.stripMargin).na.fill("").writeStream.queryName("microtrip hbase writer")
-    .format("spark.sink.HBaseSinkProvider").option("checkpointLocation", "_checkpoint/microtrip").option("hbasecat", HBaseCatalog.sf_microtrip)
+    .format("spark.sink.HBaseSinkProvider")
+    //.option("checkpointLocation", "_checkpoint/microtrip")
+    .option("hbasecat", HBaseCatalog.sf_microtrip)
     .outputMode(OutputMode.Append()).trigger(Trigger.ProcessingTime(5.seconds)).start()
 
 
@@ -97,7 +101,9 @@ object SfMicroTripStreaming extends App {
       |       ,'spark_index1'               as spark_idx
       |  from sf_trip
     """.stripMargin).na.fill("").writeStream.queryName("trip hbase writer")
-    .format("spark.sink.HBaseSinkProvider").option("checkpointLocation", "_checkpoint/trip").option("hbasecat", HBaseCatalog.sf_trip)
+    .format("spark.sink.HBaseSinkProvider")
+    //.option("checkpointLocation", "_checkpoint/trip")
+    .option("hbasecat", HBaseCatalog.sf_trip)
     .outputMode(OutputMode.Append()).trigger(Trigger.ProcessingTime(5.seconds)).start()
 
 
@@ -119,7 +125,9 @@ object SfMicroTripStreaming extends App {
       |       ,data.userId                  as user_id
       |  from sf_event
     """.stripMargin).na.fill("").writeStream.queryName("event hbase writer")
-    .format("spark.sink.HBaseSinkProvider").option("checkpointLocation", "_checkpoint/event").option("hbasecat", HBaseCatalog.sf_event)
+    .format("spark.sink.HBaseSinkProvider")
+    //.option("checkpointLocation", "_checkpoint/event")
+    .option("hbasecat", HBaseCatalog.sf_event)
     .outputMode(OutputMode.Append()).trigger(Trigger.ProcessingTime(5.seconds)).start()
 
 
@@ -128,7 +136,7 @@ object SfMicroTripStreaming extends App {
   keyValueDF.where($"key" === "sf-trip").withColumn("key", lit("sf-score")).select("key", "value")
     .writeStream
     .format("kafka")
-    .option("checkpointLocation", "_checkpoint/sf-score")
+    //.option("checkpointLocation", "_checkpoint/sf-score")
     .option("kafka.bootstrap.servers", bootstrap)
     .option("topic", "sf-score")
     .trigger(Trigger.ProcessingTime(5.seconds))

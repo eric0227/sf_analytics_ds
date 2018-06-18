@@ -8,6 +8,7 @@ object HBaseCatalog {
        |  "rowkey":"key1",
        |  "columns":{
        |    "key1"          :{"cf":"rowkey", "col":"key1", "type":"string"},
+       |    "micro_trip_id" :{"cf":"cf1", "col":"micro_trip_id", "type":"string"},
        |    "vehicle_id"   :{"cf":"cf1", "col":"vehicle_id", "type":"string"},
        |    "trip_id"      :{"cf":"cf1", "col":"trip_id", "type":"string"},
        |    "sensor_id"    :{"cf":"cf1", "col":"sensor_id", "type":"string"},
@@ -37,7 +38,6 @@ object HBaseCatalog {
         |    "start_ts"       :{"cf":"cf1", "col":"start_ts", "type":"string"},
         |    "payload"        :{"cf":"cf1", "col":"payload", "type":"string"},
         |    "spark_idx"      :{"cf":"cf1", "col":"spark_idx", "type":"string"},
-        |    "device_type"    :{"cf":"cf1", "col":"device_type", "type":"string"},
         |    "updated"        :{"cf":"cf1", "col":"updated", "type":"string"},
         |    "user_id"        :{"cf":"cf1", "col":"user_id", "type":"string"}
         |  }

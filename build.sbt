@@ -14,27 +14,16 @@ dependencyOverrides += "com.fasterxml.jackson.module" % "jackson-module-scala_2.
 resolvers += "hortonworks Repository" at "http://repo.hortonworks.com/content/groups/public/"
 
 libraryDependencies += "org.spark-project.spark" % "unused" % "1.0.0"  //% "provided"
-
 libraryDependencies += "org.apache.spark" %% "spark-core" % sparkVersion  //% "provided"
-
 libraryDependencies += "org.apache.spark" %% "spark-sql" % sparkVersion  //% "provided"
-
 libraryDependencies += "org.apache.spark" %% "spark-streaming" % sparkVersion  //% "provided"
-
 libraryDependencies += "com.datastax.spark" %% "spark-cassandra-connector" % "2.3.0" //% "provided"
-
 libraryDependencies += "org.apache.spark" %% "spark-streaming-kafka-0-10" % sparkVersion
-
 libraryDependencies += "org.apache.spark" %% "spark-sql-kafka-0-10" % sparkVersion
-
 libraryDependencies += "com.hortonworks" % "shc-core" % "1.1.1-2.1-s_2.11"
-
 libraryDependencies += "com.typesafe.play" %% "play-json" % "2.6.9" excludeAll ExclusionRule(organization = "com.fasterxml.jackson")
-
 libraryDependencies += "com.typesafe" % "config" % "1.3.3"
-
 libraryDependencies += "com.typesafe.scala-logging" %% "scala-logging" % "3.9.0"
-
 libraryDependencies += "org.scalatest" %% "scalatest" % "3.0.5" % "test"
 
 /*
@@ -48,8 +37,7 @@ libraryDependencies += "org.apache.hbase" % "hbase-spark" % "2.0.0-alpha4" exclu
 
 
 // in assembly
-//test in assembly := {}
-
+test in assembly := {}
 
 assemblyMergeStrategy in assembly := {
   case PathList("org", "aopalliance", xs@_*) => MergeStrategy.last
