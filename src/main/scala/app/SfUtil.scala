@@ -7,13 +7,20 @@ import org.apache.spark.sql.execution.datasources.hbase.HBaseTableCatalog
 import org.apache.phoenix.spark._
 
 object SfUtil {
-  // print Streaming DataFrame
+  // print Streaming, DataFrame
   def printConsole(df: DataFrame, numRows: Option[Int] = None): Unit = {
-    val writer = df.writeStream.format("console").option("header", "true").option("truncate", false)
-    (numRows match {
-      case Some(i) => writer.option("numRows", i)
-      case _ => writer
-    }).start()
+    if (df.isStreaming) {
+      val writer = df.writeStream.format("console").option("header", "true").option("truncate", false)
+      (numRows match {
+        case Some(i) => writer.option("numRows", i)
+        case _ => writer
+      }).start()
+    } else {
+      numRows match {
+        case Some(i) => df.show(numRows = i, truncate = false)
+        case _ => df.show(truncate = false)
+      }
+    }
   }
 
   def withCatalog(cat: String, sqlContext: SQLContext): DataFrame = {

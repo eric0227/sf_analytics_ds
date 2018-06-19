@@ -29,6 +29,7 @@ libraryDependencies += "com.typesafe" % "config" % "1.3.3"
 libraryDependencies += "com.typesafe.scala-logging" %% "scala-logging" % "3.9.0"
 
 libraryDependencies += "org.scalatest" %% "scalatest" % "3.0.5" % "test"
+libraryDependencies += "com.github.mrpowers" %% "spark-fast-tests" % "0.11.0" % "test"
 
 /*
 libraryDependencies += "org.apache.hbase" % "hbase-spark" % "2.0.0-alpha4" excludeAll(
