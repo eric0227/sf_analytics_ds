@@ -26,9 +26,7 @@ object SfScoreTripStreaming {
 
   val bootstrap = "192.168.203.105:9092"
   val phoenixEnable = true
-
-  val configuration = new Configuration()
-  configuration.set("hbase.zookeeper.quorum", "server01:2181")
+  val zookeeper = "server01:2181"
 
   def main(args: Array[String]) = {
 
@@ -40,8 +38,8 @@ object SfScoreTripStreaming {
     SfUtil.printConsole(keyValueDF)
 
     val tripDF = streamTripDF(keyValueDF)
-    val microTripDF = SfUtil.loadMicroTripDF(spark.sqlContext, phoenix=phoenixEnable)
-    val eventDF = SfUtil.loadEventDF(spark.sqlContext, phoenix=phoenixEnable)
+    val microTripDF = SfUtil.loadMicroTripDF(spark.sqlContext, phoenixEnable, zookeeper)
+    val eventDF = SfUtil.loadEventDF(spark.sqlContext, phoenixEnable, zookeeper)
 
     scoreProc(spark)
 

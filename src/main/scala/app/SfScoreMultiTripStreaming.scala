@@ -1,28 +1,21 @@
 package app
 
-import app.SfMicroTripStreaming.{createSparkSession, kafkaKeyValueDF, printKafkaDFCount}
 import app.udf.SfScoreUDF
-import model.{HBaseCatalog, JsonDFSchema}
-import org.apache.hadoop.conf.Configuration
-import org.apache.spark.sql.execution.datasources.hbase.HBaseTableCatalog
+import model.JsonDFSchema
 import org.apache.spark.sql.execution.streaming.FileStreamSource.Timestamp
-import org.apache.spark.sql.functions.count
+import org.apache.spark.sql.functions.{count, _}
 import org.apache.spark.sql.streaming.{OutputMode, StreamingQuery, Trigger}
 import org.apache.spark.sql.{DataFrame, SparkSession}
-import org.apache.spark.sql.functions._
 
 import scala.concurrent.duration._
-import org.apache.phoenix.spark._
 
 object SfScoreMultiTripStreaming {
 
   val bootstrap = "192.168.203.105:9092"
   val phoenixEnable = true
+  val zookeeper = "server01:2181"
 
-  val configuration = new Configuration()
-  configuration.set("hbase.zookeeper.quorum", "server01:2181")
-
-  def main(args: Array[String]) = {
+  def main(args: Array[String]): Unit = {
     val spark = createSparkSession(args)
 
     // kafka topic(sf-score)
@@ -31,8 +24,8 @@ object SfScoreMultiTripStreaming {
     SfUtil.printConsole(keyValueDF)
 
     val tripDF = streamTripDF(keyValueDF)
-    val microTripDF = SfUtil.loadMicroTripDF(spark.sqlContext, phoenix=phoenixEnable)
-    val eventDF = SfUtil.loadEventDF(spark.sqlContext, phoenix=phoenixEnable)
+    val microTripDF = SfUtil.loadMicroTripDF(spark.sqlContext, phoenixEnable, zookeeper)
+    val eventDF = SfUtil.loadEventDF(spark.sqlContext, phoenixEnable, zookeeper)
 
     multiScoreProc(spark)
 

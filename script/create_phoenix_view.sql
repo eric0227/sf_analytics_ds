@@ -1,3 +1,4 @@
+$ /home/otdev/Apps/phoenix/bin/sqlline.py localhost
 
 DROP VIEW "sf_microtrip";
 CREATE VIEW "sf_microtrip" (

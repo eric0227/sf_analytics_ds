@@ -24,18 +24,35 @@ object SfUtil {
       .load()
   }
 
-  def loadMicroTripDF(sqlContext: SQLContext, phoenix: Boolean): DataFrame = {
-    val configuration = new Configuration()
-    configuration.set("hbase.zookeeper.quorum", "server01:2181")
+  def loadTripDF(sqlContext: SQLContext, phoenix: Boolean, zookeeper: String): DataFrame = {
+    val df = if(phoenix) {
+      val configuration = new Configuration()
+      configuration.set("hbase.zookeeper.quorum", zookeeper)
 
-    val df = phoenix match {
-      case true =>
-        sqlContext.phoenixTableAsDataFrame(
-          """"sf_microtrip""""
-          , Array[String]()//Array("micro_trip_id", "vehicle_id", "trip_id", "payload", "ts")
-          , conf = configuration
-        )
-      case false => SfUtil.withCatalog(HBaseCatalog.sf_microtrip, sqlContext)
+      sqlContext.phoenixTableAsDataFrame(
+        """"sf_trip""""
+        , Array[String]()//Array("micro_trip_id", "vehicle_id", "trip_id", "payload", "ts")
+        , conf = configuration)
+    } else {
+      SfUtil.withCatalog(HBaseCatalog.sf_trip, sqlContext)
+    }
+    df.createOrReplaceTempView("sf_trip")
+    println("#### sf_trip (HBase) ######")
+    df.printSchema()
+    df
+  }
+
+  def loadMicroTripDF(sqlContext: SQLContext, phoenix: Boolean, zookeeper: String): DataFrame = {
+    val df = if(phoenix) {
+      val configuration = new Configuration()
+      configuration.set("hbase.zookeeper.quorum", zookeeper)
+
+      sqlContext.phoenixTableAsDataFrame(
+        """"sf_microtrip""""
+        , Array[String]() //Array("micro_trip_id", "vehicle_id", "trip_id", "payload", "ts")
+        , conf = configuration)
+    } else {
+      SfUtil.withCatalog(HBaseCatalog.sf_microtrip, sqlContext)
     }
     df.createOrReplaceTempView("sf_microtrip")
     println("#### sf_microtrip (HBase) ######")
@@ -43,18 +60,17 @@ object SfUtil {
     df
   }
 
-  def loadEventDF(sqlContext: SQLContext, phoenix: Boolean): DataFrame = {
-    val configuration = new Configuration()
-    configuration.set("hbase.zookeeper.quorum", "server01:2181")
+  def loadEventDF(sqlContext: SQLContext, phoenix: Boolean, zookeeper: String): DataFrame = {
+    val df = if(phoenix) {
+      val configuration = new Configuration()
+      configuration.set("hbase.zookeeper.quorum", zookeeper)
 
-    val df = phoenix match {
-      case true => SfUtil.withCatalog(HBaseCatalog.sf_event, sqlContext)
-      case false =>
-        sqlContext.phoenixTableAsDataFrame(
-          """"sf_event""""
-          , Array[String]()//Array("micro_trip_id", "vehicle_id", "trip_id", "payload", "ts")
-          , conf = configuration
-        )
+      sqlContext.phoenixTableAsDataFrame(
+        """"sf_event""""
+        , Array[String]()//Array("micro_trip_id", "vehicle_id", "trip_id", "payload", "ts")
+        , conf = configuration)
+    } else {
+      SfUtil.withCatalog(HBaseCatalog.sf_event, sqlContext)
     }
     df.createOrReplaceTempView("sf_event")
     println("#### sf_event (HBase) ######")
